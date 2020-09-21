@@ -86,7 +86,7 @@ class PersonCounter:
 
     def removePerson(self, removed):
         for i, v in enumerate(removed):
-            makeXML(self.people[v].id, self.people[v].positions, self.people[v].t)
+            makeXML(removed[i], self.people)
 
 
 
@@ -157,7 +157,7 @@ def imagepreprocessing(frame):
         cv2.fillPoly(dil, contour, 255)
         area = cv2.contourArea(contour)
         # print(area)
-        if 700 < area:
+        if 500 < area:
             x, y, width, height = cv2.boundingRect(contour)
             # if i == 1:
             #     mask = np.zeros(frame.shape[:2],dtype="uint8")
@@ -231,29 +231,35 @@ def initXML():
     SubElement(meta, 'dumped').text = '2020-09-16 08:37:30.049858+01:00'
     SubElement(meta, 'source').text = 'F18006_2_202009140900.avi'  # 동영상 파일 이름\
 
-def makeXML(id, centroid, framet):
+def makeXML(id, people):
     global root
     global track
 
-    track = root.find('track[@id="' + str(id) + '"]')
-    if track is None:
-        print("nononononon")
-    else:
-        for i in range(len(centroid)):
-            box = SubElement(track, 'box')
-            box.attrib["frame"] = str(framet[i])  # 박스의 프레임 넘버
+    for i,person in enumerate(people):
+        if person.id == id:
 
-            if i < (len(centroid)-1):
-                box.attrib["outside"] = '0'
+            track = root.find('track[@id="' + str(id) + '"]')
+            centroid = person.positions
+            framet = person.t
+            if track is None:
+                print("nononononon")
             else:
-                box.attrib["outside"] = '1'
+                for i in range(len(centroid)):
+                    box = SubElement(track, 'box')
+                    box.attrib["frame"] = str(framet[i])  # 박스의 프레임 넘버
 
-            box.attrib["occluded"] = '0'
-            box.attrib["keyframe"] = '1'
-            box.attrib["xtl"] = str(centroid[i][0] - h_width / 2)
-            box.attrib["ytl"] = str(centroid[i][1] - h_height / 2)
-            box.attrib["xbr"] = str(centroid[i][0] + h_width / 2)
-            box.attrib["ybr"] = str(centroid[i][1] + h_height / 2)
+                    if i < (len(centroid)-1):
+                        box.attrib["outside"] = '0'
+                    else:
+                        box.attrib["outside"] = '1'
+
+                    box.attrib["occluded"] = '0'
+                    box.attrib["keyframe"] = '1'
+                    box.attrib["xtl"] = str(centroid[i][0] - h_width / 2)
+                    box.attrib["ytl"] = str(centroid[i][1] - h_height / 2)
+                    box.attrib["xbr"] = str(centroid[i][0] + h_width / 2)
+                    box.attrib["ybr"] = str(centroid[i][1] + h_height / 2)
+                    break
 
 
 #%% 그 외 전역변수
@@ -359,13 +365,20 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
-#%% 데이터 확인
+#%% xml파일 생성
 
 for i, person in enumerate(person_counter.people):
-    makeXML(person.id, person.positions, person.t)
+    makeXML(person.id, person_counter.people)
+
+for i in range(person_counter.cntperson):
+    track = root.find('track[@id="' + str(i) + '"]')
+    if len(track) == 1:
+        root.remove(track)
 
 tree = ElementTree(root)
 tree.write('annotations.xml')  #xml 파일로 보내기
+
+
 
 
 
