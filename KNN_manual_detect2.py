@@ -3,9 +3,33 @@ import cv2
 import math
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
-#%%
-root = Element('annotations')
-track = None
+#%% object class
+class AllObject:
+    def __init__(self):
+        self.all_object = []
+
+    def update(self, object):
+        self.all_object.append(object)
+
+class Person:
+    def __init__(self, position):
+        self.center = [position]
+        self.h_width = 20
+        self.h_height = 50
+
+
+class Motorcycle:
+    def __init__(self, position):
+        self.center = [position]
+        self.motor_width = 50
+        self.motor_height = 50
+
+class Bicycle:
+    def __init__(self, position):
+        self.center = [position]
+        self.bi_width = 40
+        self.bi_height = 50
+
 
 #%% 마우스 클릭을 위한 부분 (마스크 만들기)
 dir_del = None
@@ -17,6 +41,15 @@ def MouseLeftClick(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         clicked_points.append((x, y))
 
+        if label.__eq__('사람'):
+            compare(clicked_points, person_blobs)
+
+        elif label.__eq__('이륜차'):
+            compare(clicked_points, motor_blobs)
+
+        elif label.__eq__('자전거'):
+            compare(clicked_points, bi_blobs)
+
         # 원본 파일을 가져 와서 clicked_points에 있는 점들을 그린다.
         image = clone.copy()
         for point in clicked_points:
@@ -25,12 +58,12 @@ def MouseLeftClick(event, x, y, flags, param):
                           (point[0] + half_width, point[1] + half_height), (255, 255, 255), 3)
         cv2.imshow("image", image)
 
+
 # 새 윈도우 창을 만들고 그 윈도우 창에 MouseLeftClick 함수를 세팅해 줍니다.
 cv2.namedWindow("image")
 cv2.setMouseCallback("image", MouseLeftClick)
 
-#%%
-# 영상불러오기
+#%% 영상불러오기
 cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
 imagename = 'F18006_2_202009140900'
 
@@ -91,6 +124,8 @@ def imagepreprocessing(frame):
     return dil
 
 #%% xml 만드는 부분
+root = Element('annotations')
+
 def initXML():
     global root
     root = Element('annotations')
@@ -139,25 +174,39 @@ def initXML():
     SubElement(meta, 'dumped').text = '2020-09-16 08:37:30.049858+01:00'
     SubElement(meta, 'source').text = 'F18006_2_202009140900.avi'  # 동영상 파일 이름\
 
-def makeXML(id, name, blobs):
+def makeXML(id, name, blobs, object):
     global root
 
-    image = SubElement(root, 'image')
-    image.attrib["id"] = str(id)  # 차량 id\n"
-    image.attrib["name"] = name
-    image.attrib["width"] = str(width)
-    image.attrib["height"] = str(height)
+    image = root.find('image[@id="' + str(id) + '"]')
+    if image is None:
+        image = SubElement(root, 'image')
+        image.attrib["id"] = str(id)
+        image.attrib["name"] = name
+        image.attrib["width"] = str(width)
+        image.attrib["height"] = str(height)
+
+    if object.__eq__('사람'):
+        label_width = h_width
+        label_height = h_height
+
+    if object.__eq__('이륜차'):
+        label_width = motor_width
+        label_height = motor_height
+
+    if object.__eq__('자전거'):
+        label_width = bi_width
+        label_height = bi_height
 
     for i in range(len(blobs)):
         box = SubElement(image, 'box')
-        box.attrib["label"] = '사람'  # 박스의 프레임 넘버
+        box.attrib["label"] = object
         box.attrib["occluded"] = '0'
         box.attrib["source"] = 'manual'
 
-        xtl = blobs[i][0] - h_width / 2
-        ytl = blobs[i][1] - h_height / 2
-        xbr = blobs[i][0] + h_width / 2
-        ybr = blobs[i][1] + h_height / 2
+        xtl = blobs[i][0] - label_width / 2
+        ytl = blobs[i][1] - label_height / 2
+        xbr = blobs[i][0] + label_width / 2
+        ybr = blobs[i][1] + label_height / 2
 
         if xtl < 0:
             xtl = 0
@@ -191,7 +240,7 @@ def apply_indent(elem, level = 0):
 
 
 #%%
-def compare(clicks, blobs):
+def compare(clicks, a):
     global create
     global removed
 
@@ -200,16 +249,21 @@ def compare(clicks, blobs):
             if (click[0] - margin < center[0] < click[0] + margin) and (click[1] - margin < center[1] < click[1] + margin):
                 removed.append(center)
                 removed.append(click)
+                click = center
 
-    for i, v in enumerate(removed):
-        blobs[:] = [v for j,v in enumerate(blobs)
+
+
+    a[:] = [v for j,v in enumerate(a)
                     if v not in removed]
 
     create[:] = [v for i, v in enumerate(clicks)
                  if v not in removed]
 
+    blobs[:] = [v for j, v in enumerate(blobs)
+            if v not in clicks or v not in create]
+
     for i, v in enumerate(create):
-        blobs.append(v)
+        a.append(v)
 
     removed = []
     create = []
@@ -225,11 +279,7 @@ t = 0
 mode = cv2.RETR_EXTERNAL
 method = cv2.CHAIN_APPROX_SIMPLE
 
-# 사람의 박스 크기
-h_width = 20
-h_height = 50
-half_width = int(h_width / 2)
-half_height = int(h_height / 2)
+
 
 blobs = []
 margin = 10
@@ -250,6 +300,31 @@ total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 # 동영상 저장용 (안씀)
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
 out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
+
+
+# 사람의 박스 크기
+h_width = 20
+h_height = 50
+person_blobs = []
+
+# 이륜차
+motor_width = 50
+motor_height = 50
+motor_blobs = []
+
+# 자전거
+bi_width = 40
+bi_height = 50
+bi_blobs = []
+
+# label 종류에 따른 변수
+label = '사람'
+label_english = 'person'
+label_width = h_width
+label_height = h_height
+
+half_width = int(label_width / 2)
+half_height = int(label_height / 2)
 
 #%%
 initXML()
@@ -302,6 +377,10 @@ while True:
 
     if flag == 1:
         blobs = []
+        person_blobs = []
+        motor_blobs = []
+        bi_blobs = []
+
         # 새 윈도우 창을 만들고 그 윈도우 창에 MouseLeftClick 함수를 세팅해 줍니다.
         cv2.namedWindow("image")
         cv2.setMouseCallback("image", MouseLeftClick)
@@ -326,9 +405,28 @@ while True:
             while True:
                 cv2.imwrite('C:/MyWorkspace/Make_AIDataset/image_F18006_2_202009140900/original/' + name, frame)
                 clone = frame.copy()
+                cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
+                half_width = int(label_width / 2)
+                half_height = int(label_height / 2)
 
                 for i,center in enumerate(blobs):
-                    cv2.rectangle(clone,(center[0] - half_width , center[1] - half_height), (center[0]+half_width, center[1]+half_height), (255, 255, 255), 2)
+                    cv2.rectangle(clone,(center[0] - int(h_width/2), center[1] - int(h_height/2)),
+                                  (center[0]+int(h_width/2), center[1]+int(h_height/2)), (255, 255, 255), 2)
+                    cv2.circle(clone, (center[0], center[1]), 2, (255, 0, 0), thickness=2)
+
+                for i,center in enumerate(person_blobs):
+                    cv2.rectangle(clone,(center[0] - int(h_width/2), center[1] - int(h_height/2)),
+                                  (center[0]+int(h_width/2), center[1]+int(h_height/2)), (255, 255, 255), 2)
+                    cv2.circle(clone, (center[0], center[1]), 2, (255, 0, 0), thickness=2)
+
+                for i,center in enumerate(motor_blobs):
+                    cv2.rectangle(clone,(center[0] - int(motor_width/2), center[1] - int(motor_height/2)),
+                                  (center[0]+int(motor_width/2), center[1]+int(motor_height/2)), (255, 255, 255), 2)
+                    cv2.circle(clone, (center[0], center[1]), 2, (255, 0, 0), thickness=2)
+
+                for i,center in enumerate(bi_blobs):
+                    cv2.rectangle(clone,(center[0] - int(bi_width/2), center[1] - int(bi_height/2)),
+                                  (center[0]+int(bi_width/2), center[1]+int(bi_height/2)), (255, 255, 255), 2)
                     cv2.circle(clone, (center[0], center[1]), 2, (255, 0, 0), thickness=2)
 
                 # frames = cv2.resize(frame, (1080, 720))
@@ -343,10 +441,16 @@ while True:
 
                 # 다음 프레임으로 넘어가기
                 if k == ord("d"):
-                    makeXML(id, name, blobs)
+                    makeXML(id, name, person_blobs, '사람')
+                    makeXML(id, name, person_blobs, '이륜차')
+                    makeXML(id, name, person_blobs, '자전거')
+
                     id += 1
                     clicked_points = []
                     blobs = []
+                    person_blobs = []
+                    motor_blobs = []
+                    bi_blobs = []
                     cv2.imwrite('C:/MyWorkspace/Make_AIDataset/image_F18006_2_202009140900/detect/' + name, clone)
 
                     break
@@ -355,6 +459,26 @@ while True:
                     compare(clicked_points, blobs)
                     clicked_points = []
 
+                # 사람 1번
+                if k == 49:
+                    label = '사람'
+                    label_english = 'person'
+                    label_width = h_width
+                    label_height = h_height
+
+                # 이륜차 2번
+                if k == 50:
+                    label = '이륜차'
+                    label_english = 'motorcycle'
+                    label_width = motor_width
+                    label_height = motor_height
+
+                # 자전거 3번
+                if k == 51:
+                    label = '자전거'
+                    label_english = 'bicycle'
+                    label_width = bi_width
+                    label_height = bi_height
     else:
         break
 
