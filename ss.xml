@@ -1,0 +1,50 @@
+<annotations>
+  <version>1.1</version>
+  <meta>
+    <task>
+      <id>12937</id>
+      <name>image_F18006_2_202009140900</name>
+      <size>365</size>
+      <mode>annotation</mode>
+      <overlap>0</overlap>
+      <bugtracker />
+      <created>2020-09-15 07:01:49.569020+01:00</created>
+      <updated>2020-09-16 08:37:29.588763+01:00</updated>
+      <start_frame>0</start_frame>
+      <stop_frame>364</stop_frame>
+      <frame_filter />
+      <z_order>False</z_order>
+      <labels>
+        <label>
+          <name>&#49324;&#46988;</name>
+          <color>#1dc799</color>
+          <attributes />
+        </label>
+      </labels>
+      <segments>
+        <segment>
+          <id>28</id>
+          <start>0</start>
+          <stop>364</stop>
+          <url>http://222.107.208.162:8088/?id=28</url>
+        </segment>
+      </segments>
+      <owner>
+        <username>brotherwook</username>
+        <email>jahanda@naver.com</email>
+      </owner>
+      <assignee />
+    </task>
+    <dumped>2020-09-16 08:37:30.049858+01:00</dumped>
+  </meta>
+  <image height="1080" id="0" name="F18006_2_202009140900_0.jpg" width="1920">
+    <box label="&#49324;&#46988;" occluded="0" source="manual" xbr="1091.0" xtl="1071.0" ybr="434.0" ytl="384.0" />
+    <box label="&#49324;&#46988;" occluded="0" source="manual" xbr="1364.0" xtl="1344.0" ybr="433.0" ytl="383.0" />
+    <box label="&#51060;&#47452;&#52264;" occluded="0" source="manual" xbr="1161.0" xtl="1101.0" ybr="351.0" ytl="291.0" />
+    <box label="&#51060;&#47452;&#52264;" occluded="0" source="manual" xbr="943.0" xtl="883.0" ybr="296.0" ytl="236.0" />
+    <box label="&#51088;&#51204;&#44144;" occluded="0" source="manual" xbr="876.0" xtl="836.0" ybr="570.0" ytl="520.0" />
+    <box label="&#51088;&#51204;&#44144;" occluded="0" source="manual" xbr="1233.0" xtl="1193.0" ybr="562.0" ytl="512.0" />
+    <box label="&#51088;&#51204;&#44144;" occluded="0" source="manual" xbr="1230.0" xtl="1190.0" ybr="675.0" ytl="625.0" />
+    <box label="&#51088;&#51204;&#44144;" occluded="0" source="manual" xbr="1063.0" xtl="1023.0" ybr="754.0" ytl="704.0" />
+  </image>
+</annotations>
