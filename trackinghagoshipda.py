@@ -82,7 +82,7 @@ class PersonCounter:
             removed = []
 
             self.people[:] = [person for person in self.people
-                                if t - person.updateframe < 200]
+                                if t - person.updateframe <= 200]
 
     def removePerson(self, removed):
         for i, v in enumerate(removed):
@@ -113,7 +113,7 @@ cv2.setMouseCallback("image", MouseLeftClick)
 
 #%%
 # 영상불러오기
-cap = cv2.VideoCapture('C:\MyWorkspace\Detectioncode\inputs\F18006_2\F18006_2_202009140800.avi')
+cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
 if (not cap.isOpened()):
     print('Error opening video')
 
@@ -157,7 +157,7 @@ def imagepreprocessing(frame):
         cv2.fillPoly(dil, contour, 255)
         area = cv2.contourArea(contour)
         # print(area)
-        if 500 < area:
+        if 700 < area:
             x, y, width, height = cv2.boundingRect(contour)
             # if i == 1:
             #     mask = np.zeros(frame.shape[:2],dtype="uint8")
@@ -235,7 +235,7 @@ def makeXML(id, people):
     global root
     global track
 
-    for i,person in enumerate(people):
+    for i, person in enumerate(people):
         if person.id == id:
 
             track = root.find('track[@id="' + str(id) + '"]')
@@ -248,7 +248,7 @@ def makeXML(id, people):
                     box = SubElement(track, 'box')
                     box.attrib["frame"] = str(framet[i])  # 박스의 프레임 넘버
 
-                    if i < (len(centroid)-1):
+                    if i < (len(centroid) - 1):
                         box.attrib["outside"] = '0'
                     else:
                         box.attrib["outside"] = '1'
@@ -259,8 +259,24 @@ def makeXML(id, people):
                     box.attrib["ytl"] = str(centroid[i][1] - h_height / 2)
                     box.attrib["xbr"] = str(centroid[i][0] + h_width / 2)
                     box.attrib["ybr"] = str(centroid[i][1] + h_height / 2)
-                    break
 
+            break
+
+def apply_indent(elem, level = 0):
+    # tab = space * 2
+    indent = "\n" + level * "  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = indent + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = indent
+        for elem in elem:
+            apply_indent(elem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = indent
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = indent
 
 #%% 그 외 전역변수
 fgbg = cv2.createBackgroundSubtractorKNN()
@@ -286,6 +302,10 @@ flag = 0
 mask = None
 roi = [[]]
 
+total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
+out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
 
 #%%
 initXML()
@@ -350,9 +370,9 @@ while True:
 
         blobs = []
 
-        frames = cv2.resize(frame, (1080, 720))
-        cv2.imshow("frame", frames)
-
+        # frames = cv2.resize(frame, (1080, 720))
+        out.write(frame)
+        cv2.imshow("frame", frame)
 
         k = cv2.waitKey(1)
         if k == 27:
@@ -363,22 +383,24 @@ while True:
 
 
 cap.release()
+out.release()
 cv2.destroyAllWindows()
 
-#%% xml파일 생성
+#%% 데이터 확인
 
 for i, person in enumerate(person_counter.people):
     makeXML(person.id, person_counter.people)
 
 for i in range(person_counter.cntperson):
     track = root.find('track[@id="' + str(i) + '"]')
-    if len(track) == 1:
+    print(len(track))
+    if len(track) <= 5:
         root.remove(track)
 
+apply_indent(root)
+
 tree = ElementTree(root)
-tree.write('annotations.xml')  #xml 파일로 보내기
-
-
+tree.write('111900.xml')  #xml 파일로 보내기
 
 
 
