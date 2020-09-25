@@ -7,12 +7,9 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree
 class AllObject:
     def __init__(self, blobs):
         self.all_object = []
-        # 1 사람, 2 이륜차, 3 자전거
-        self.objectkind = []
         for i,v in enumerate(blobs):
             person = Person(v)
             self.all_object.append(person)
-            self.objectkind.append(1)
 
     def update(self, object):
         self.all_object.append(object)
@@ -67,7 +64,7 @@ cv2.namedWindow("image")
 cv2.setMouseCallback("image", MouseLeftClick)
 
 #%% 영상불러오기
-cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
+cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200923]100000-[20200923]100600(20200923_100000).avi')
 imagename = 'F18006_2_202009140900'
 
 if (not cap.isOpened()):
@@ -112,11 +109,15 @@ def imagepreprocessing(frame):
     for i, contour in enumerate(contours):
         cv2.fillPoly(dil, contour, 255)
         area = cv2.contourArea(contour)
-        # print(area)
-        if 500 < area:
-            x, y, width, height = cv2.boundingRect(contour)
+        x, y, width, height = cv2.boundingRect(contour)
 
-            if width < 30:
+        # cv2.putText(frame, "width:" + str(width) + " , height:" + str(height) + ", Area:" + str(area), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.75,
+        #             (225, 0, 255), 1, cv2.LINE_AA)
+        # cv2.rectangle(frame, (x, y),
+        #               (x + width, y + height), (255, 0, 255), 2)
+        # print(area)
+        if 400 < area:
+            if 15 < width < 35 and 55 <= height:
                 center = (int(x + width / 2), int(y + height / 2))
                 # cv2.drawContours(frame, contour, -1, (0, 0, 255), 1)
                 blobs.append(center)
@@ -330,6 +331,8 @@ while True:
     if not ret:
         break
 
+    frame = cv2.resize(frame,(int(width/2),int(height/2)))
+
     # 마스크 설정 부분
     # 마우스로 보기를 원하는 부분 클릭하고 n누르면 해당부분만 확인
     # 원하는 부분 클릭후  다음 프레임에서 또 다시 클릭하면 모두 확인가능
@@ -398,7 +401,7 @@ while True:
         if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
             everything = AllObject(blobs)
             while True:
-                cv2.imwrite('C:/MyWorkspace/Make_AIDataset/image_F18006_2_202009140900/original/' + name, frame)
+                # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/original/' + name, frame)
                 clone = frame.copy()
                 cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
                 half_width = int(label_width / 2)
@@ -412,7 +415,7 @@ while True:
 
                 # frames = cv2.resize(frame, (1080, 720))
                 cv2.imshow("image", clone)
-
+                cv2.imshow("dil", dil)
                 k = cv2.waitKey(0)
 
                 # 프로그램 종료
@@ -426,7 +429,7 @@ while True:
                     id += 1
                     clicked_points = []
                     blobs = []
-                    cv2.imwrite('C:/MyWorkspace/Make_AIDataset/image_F18006_2_202009140900/detect/' + name, clone)
+                    # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/detect/' + name, clone)
 
                     break
 
