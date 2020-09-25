@@ -18,7 +18,7 @@ remove = []
 bbox = []
 trackerName = 'TrackerBoosting'
 
-video_src = 'C:\MyWorkspace\Detectioncode\inputs\F18006_2\F18006_2_202009140900.avi'
+video_src = 'C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi'
 cap = cv2.VideoCapture(video_src)
 fps = cap.get(cv2.CAP_PROP_FPS)
 delay = int(1000/fps)
@@ -33,7 +33,7 @@ while cap.isOpened():
         cv2.putText(img_draw, "Press the Space to set ROI!!", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255),2,cv2.LINE_AA)
     else:
         print(len(tracker))
-        for i in range(len(tracker)-1):
+        for i in range(len(tracker)):
             ok, temp = tracker[i].update(frame)
             if ok:
                 bbox.append(temp)
@@ -45,13 +45,13 @@ while cap.isOpened():
             (x,y,w,h) = box
             cv2.rectangle(img_draw, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2, 1)
         bbox = []
-        if len(remove)>0:
+        if len(remove)>1:
             for i in range(len(remove)-1, 0, -1):
                 del tracker[i]
 
 
         remove = []
-    cv2.putText(img_draw, str(trackerIdx) + ":" + trackerName, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
+    cv2.putText(img_draw, str(trackerIdx) + ":" + str(trackerName), (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
 
     cv2.imshow(win_name, img_draw)
     key = cv2.waitKey(1)
@@ -64,7 +64,7 @@ while cap.isOpened():
                 for i in range(len(roi)):
                     tracker.append(trackers[trackerIdx]())
                     isInint = tracker[i].init(frame, tuple(roi[i]))
-        trackerName = tracker[0].__class__.__name__
+                trackerName = tracker[-1].__class__.__name__
 
     elif key in range(48, 56):
         trackerIdx = key-48
@@ -72,7 +72,7 @@ while cap.isOpened():
             for i in range(len(roi)):
                 tracker.append(trackers[trackerIdx]())
                 isInint = tracker[i].init(frame, tuple(roi[i]))
-        trackerName = tracker[0].__class__.__name__
+            trackerName = tracker[-1].__class__.__name__
 
     elif key == 27:
         break
