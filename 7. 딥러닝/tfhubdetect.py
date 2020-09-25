@@ -30,7 +30,7 @@ cv2.setMouseCallback("image", MouseLeftClick)
 
 #%% 영상불러오기
 cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
-imagename = 'F18006_2_202009140900'
+imagename = 'F20001;3_3'
 
 if (not cap.isOpened()):
     print('Error opening video')
@@ -189,6 +189,7 @@ def compare(clicks, blobs):
 
 #%% 그 외 전역변수
 height, width = (int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)))
+# height, width = (640, 860)
 
 # 현재 프레임 번호 변수
 t = 0
@@ -217,7 +218,7 @@ total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
 # 동영상 저장용 (안씀)
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
-out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
+out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (width, height))
 
 # tfhub용
 threshold = 0.2
@@ -228,6 +229,8 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
+
+    # frame = cv2.resize(frame,(860,640))
 
     # 마스크 설정 부분
     # 마우스로 보기를 원하는 부분 클릭하고 n누르면 해당부분만 확인
@@ -299,7 +302,7 @@ while True:
             output = model(input)
             deeplearning(output, clone)
             while True:
-                cv2.imwrite('C:/MyWorkspace/Make_AIDataset/image_F18006_2_202009140900/original/' + name, frame)
+                # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/original/' + name, frame)
                 clone = frame.copy()
                 for i,center in enumerate(blobs):
                     cv2.rectangle(clone,(center[0] - half_width , center[1] - half_height), (center[0]+half_width, center[1]+half_height), (255, 255, 255), 2)
@@ -321,7 +324,7 @@ while True:
                     id += 1
                     clicked_points = []
                     blobs = []
-                    cv2.imwrite('C:/MyWorkspace/Make_AIDataset/image_F18006_2_202009140900/deeplearning/' + name, clone)
+                    # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/deeplearning/' + name, clone)
 
                     break
 
