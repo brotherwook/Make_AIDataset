@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import sys
 from xml.etree.ElementTree import Element, SubElement, ElementTree
-
+import os
 
 # cmd 창에서 실행시 python person_detecting.py input_video_path(avi) output_image_dir output_image_name 순으로 적어주면 됩니다.
 
@@ -53,7 +53,7 @@ half_height = int(label_height / 2)
 
 if len(sys.argv) == 1:
     video_path ='C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200928]080000-[20200928]080600(20200928_080000).avi'
-    image_save_path = 'C:\MyWorkspace\Make_AIDataset\outputs\image\original'
+    image_save_path = 'C:\MyWorkspace\Make_AIDataset\outputs\image'
     imagename = 'test'
 elif len(sys.argv) == 4:
     video_path = sys.argv[1]
@@ -62,6 +62,19 @@ elif len(sys.argv) == 4:
 else :
     print("Usage: python person_detecting.py input_video_path(avi) output_image_dir output_image_name")
     print("원본 동영상 경로 및 저장할 저장할 배경이미지 경로(파일이름까지)(경로에 한글 포함되면 안됩니다.)")
+
+try:
+    os.mkdir(image_save_path + "/" + imagename)
+except:
+    print(imagename, "폴더가 이미 있음")
+try:
+    os.mkdir(image_save_path + "/" + imagename + "/original")
+except:
+    print(imagename+"/original 폴더가 이미있음")
+try:
+    os.mkdir(image_save_path + "/" + imagename + "/detect")
+except:
+    print(imagename+"/detect 폴더가 이미 있음")
 
 
 #%% object class
@@ -450,7 +463,7 @@ while True:
         # 객체찾는 함수에서 center값만 blobs에 append해주면 됩니다
         if len(roi[0]) > 0:
             # 마스크가 생성됬을 경우 마스크 처리한 부분만 조사
-            cv2.imshow("mask", mask)
+            # cv2.imshow("mask", mask)
             roi_img = cv2.bitwise_and(frame, mask)
             
             # 객체 찾는 함수
@@ -473,9 +486,9 @@ while True:
         # 1초당 한프레임만 저장
         if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
             everything = AllObject(blobs)
+            # roi 빨간색으로 경계 쳐진 이미지 저장
+            cv2.imwrite(image_save_path + "/" + imagename + "/original" + name, frame)
             while True:
-                # roi 빨간색으로 경계 쳐진 이미지 저장
-                cv2.imwrite(image_save_path + name, frame)
                 clone = frame.copy()
                 cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
                 half_width = int(label_width / 2)
@@ -488,8 +501,9 @@ while True:
 
 
                 cv2.imshow("image", clone)
-                cv2.imshow("dil", dil)
+                # cv2.imshow("dil", dil)
                 k = cv2.waitKey(0)
+
 
                 # 프로그램 종료
                 if k == 27:
@@ -503,7 +517,7 @@ while True:
                     clicked_points = []
                     blobs = []
                     # detecting한 이미지 저장
-                    # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\outputs\image\detect/' + name, clone)
+                    cv2.imwrite(image_save_path + "/" + imagename + '/detect' + name, clone)
                     cnt += 1
 
                     break
@@ -568,6 +582,6 @@ apply_indent(root)
 
 # xml 파일로 보내기
 tree = ElementTree(root)
-tree.write(image_save_path + "/" + imagename + ".xml")
+tree.write(image_save_path + "/" + imagename + "/" + imagename + ".xml")
 
 
