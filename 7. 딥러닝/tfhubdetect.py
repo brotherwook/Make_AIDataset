@@ -29,7 +29,7 @@ cv2.namedWindow("image")
 cv2.setMouseCallback("image", MouseLeftClick)
 
 #%% 영상불러오기
-cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
+cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200928]080000-[20200928]080600(20200928_080000).avi')
 imagename = 'F20001;3_3'
 
 if (not cap.isOpened()):
