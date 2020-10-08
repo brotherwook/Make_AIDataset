@@ -5,9 +5,8 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree
 import os
 import openpyxl
 
-# cmd 창에서 실행시 python person_detecting.py input_video_path(avi) output_image_dir output_image_name 순으로 적어주면 됩니다.
-#           또는 python person_detecting.py excel경로
-
+# cmd 창에서 실행시 python person_detecting_auto_largeszie.py input_video_path(avi) output_image_dir output_image_name 순으로 적어주면 됩니다.
+#           또는 python person_detecting_auto_largeszie.py excel경로
 #%% ========================================== 코드 설명 ====================================================
 # cv2.createBackgroundSubtractorKNN() 함수를 사용해서 객체를 먼저 찾고
 # 마우스클릭으로 못 찾은 객체나 잘못찾은 객체를 수정하는 코드입니다
@@ -18,13 +17,17 @@ import openpyxl
 #
 # 영상 시작 후
 # 첫프레임은 일단 객체를 못찾습니다. 첫프레임만큼은 수동으로...
+# 나머지는 자동을 detect하면서 프레임이 넘어갑니다.
+# 박스크기를 수정하고 싶으면 a를 누르면 영상 재생이 멈춥니다.(다음 프레임에서 멈춤)
+# 이후 d를 누르면 다시 영상 재생이 시작됩니다.
+# ----- a를 누른 이후 할 수 있는일 -----
 # 마우스로 클릭하면 설정한 크기의 박스가 생성됩니다. 원하는 곳에 박스를 만들고 's'를 누르면 해당 위치가 저장이 됩니다.
 # 지우고 싶은 박스가 있는경우 그 박스의 가운데 점을 클릭 후 똑같이 's'를 눌러주면 박스가 사라집니다.
 # 1,2,3번 키를 통해 사람,이륜차,자전거로 라벨명과 박스 크기를 변경할 수 있습니다.\
 # 기준 박스크기 변경은 1,2,3번 키를 통해 바꾸고 오른쪽 마우스 드래그로 원하는 박스크기를 설정 후 스페이스바를 눌러주시면 변경이 됩니다.
 # 해당 프레임의 수정이 끝났으면 'd'를 눌러 다음 프레임으로 넘어갈 수 있습니다.
 # 영상은 1초에 1프레임씩 넘어갑니다.
-#
+# ------------------------------------
 # 재생 도중 멈추고싶으면 'esc'키를 눌러 종료하면 종료시점까지의 데이터(xml,사진)이 저장됩니다.
 # ==========================================================================================================
 
@@ -70,6 +73,8 @@ elif len(sys.argv) == 4:
 else :
     print("Usage: python person_detecting.py input_video_path(avi) output_image_dir output_image_name")
     print("원본 동영상 경로 및 저장할 저장할 배경이미지 경로(파일이름까지)(경로에 한글 포함되면 안됩니다.)")
+
+
 
 
 #%% object class
@@ -193,12 +198,15 @@ def imagepreprocessing(img):
     k = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
     dil = cv2.dilate(dil, k)
 
+    kernel = np.ones((5, 5), np.uint8)
+    dil = cv2.morphologyEx(dil.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
+
     # 다시 윤곽선 찾기
     contours, hierachy = cv2.findContours(dil, mode, method)
 
     # 중심점 구하기
     for i, contour in enumerate(contours):
-        cv2.fillPoly(dil, contour, 255)
+        dil = cv2.fillPoly(dil, contour, 255)
         area = cv2.contourArea(contour)
         x, y, width, height = cv2.boundingRect(contour)
 
@@ -278,19 +286,19 @@ def makeXML(id, name, all_object):
         xbr = v.center[0] + v.width / 2
         ybr = v.center[1] + v.height / 2
 
-        if xtl < 0:
+        if xtl*2 < 0:
             xtl = 0
-        if ytl < 0:
+        if ytl*2 < 0:
             ytl = 0
-        if xbr > width:
+        if xbr*2 > width:
             xbr = width
-        if ybr > height:
+        if ybr*2 > height:
             ybr = height
 
-        box.attrib["xtl"] = str(xtl)
-        box.attrib["ytl"] = str(ytl)
-        box.attrib["xbr"] = str(xbr)
-        box.attrib["ybr"] = str(ybr)
+        box.attrib["xtl"] = str(xtl*2)
+        box.attrib["ytl"] = str(ytl*2)
+        box.attrib["xbr"] = str(xbr*2)
+        box.attrib["ybr"] = str(ybr*2)
 
 # 들여쓰기 함수
 def apply_indent(elem, level = 0):
@@ -316,7 +324,7 @@ def number(num):
 def compare(click, blobs, label):
     global create
     global removed
-
+    global margin
     for j, center in enumerate(blobs):
         if (click[0] - margin < center[0] < click[0] + margin) and (click[1] - margin < center[1] < click[1] + margin):
             removed.append(center)
@@ -358,6 +366,7 @@ def removeBOX():
 #%% 그 외 전역변수
 fgbg = cv2.createBackgroundSubtractorKNN()
 
+
 # 현재 프레임 번호 변수
 t = 0
 
@@ -379,13 +388,13 @@ temp = []
 
 color = np.random.randint(0, 255, (200, 3))
 
+
 # 동영상 저장용 (안씀)
 # fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
 # out = cv2.VideoWriter('C:/MyWorkspace/Make_AIDataset/outputs/video/output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (width, height))
 
 everything = None
 cnt = 0
-#%%
 #%%
 if excel_path == None:
     length = 2
@@ -429,10 +438,12 @@ for i in range(2, length, 1):
     root = Element('annotations')
     initXML()
     while True:
-        ret, frame = cap.read()
+        ret, frameo = cap.read()
         if not ret:
             break
-
+        a = int(width/2)
+        b = int(height/2)
+        frame = cv2.resize(frameo, (a,b))
         # 마스크 설정 부분
         # 마우스로 보기를 원하는 부분 클릭하고 n누르면 해당부분만 확인
         # 원하는 부분 클릭후  다음 프레임에서 또 다시 클릭하면 모두 확인가능
@@ -504,7 +515,7 @@ for i in range(2, length, 1):
             name = "/" + imagename + "_" + number(cnt) +".jpg"
 
             if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
-                cv2.imwrite(image_save_path + "/" + imagename + "/original" + name, frame)
+                cv2.imwrite(image_save_path + "/" + imagename + "/original" + name, frameo)
 
             # ==============객체 찾는 부분 ===============
             # 객체 찾는 부분만 수정해서 사용하면 됩니다
@@ -535,84 +546,107 @@ for i in range(2, length, 1):
             if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
                 everything = AllObject(blobs)
                 # roi 빨간색으로 경계 쳐진 이미지 저장
-                cv2.imwrite(image_save_path + "/" + imagename + "/roi" + name, frame)
-                while True:
-                    clone = frame.copy()
-                    cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
-                    half_width = int(label_width / 2)
-                    half_height = int(label_height / 2)
+                img_tmp = cv2.resize(frame, (width,height))
+                cv2.imwrite(image_save_path + "/" + imagename + "/roi" + name, img_tmp)
+                clone = frame.copy()
+                cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
+                half_width = int(label_width / 2)
+                half_height = int(label_height / 2)
 
-                    for i,obj in enumerate(everything.all_object):
-                        cv2.rectangle(clone,(obj.center[0] - int(obj.width/2), obj.center[1] - int(obj.height/2)),
-                                      (obj.center[0]+int(obj.width/2), obj.center[1]+int(obj.height/2)), (255, 255, 255), 2)
-                        cv2.circle(clone, (obj.center[0], obj.center[1]), 2, (255, 0, 0), thickness=2)
-
-
-                    cv2.imshow("image", clone)
-                    # cv2.imshow("dil", dil)
-                    k = cv2.waitKey(0)
+                for i,obj in enumerate(everything.all_object):
+                    cv2.rectangle(clone,(obj.center[0] - int(obj.width/2), obj.center[1] - int(obj.height/2)),
+                                  (obj.center[0]+int(obj.width/2), obj.center[1]+int(obj.height/2)), (255, 255, 255), 2)
+                    cv2.circle(clone, (obj.center[0], obj.center[1]), 2, (255, 0, 0), thickness=2)
 
 
-                    # 프로그램 종료
-                    if k == 27:
-                        flag = 2
-                        break
+                cv2.imshow("image", clone)
+                cv2.imshow("dil", dil)
 
-                    # 다음 프레임으로 넘어가기
-                    if k == ord("d"):
-                        makeXML(id, name, everything.all_object)
-                        id += 1
-                        clicked_points = []
-                        blobs = []
-                        # detecting한 이미지 저장
-                        cv2.imwrite(image_save_path + "/" + imagename + '/detect' + name, clone)
-                        cnt += 1
+                key = cv2.waitKey(1)
 
-                        break
+                if key == ord("a") or t == 0:
+                    while True:
+                        clone = frame.copy()
+                        cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2,
+                                    cv2.LINE_AA)
+                        half_width = int(label_width / 2)
+                        half_height = int(label_height / 2)
 
-                    if k == ord('s'):
-                        removeBOX()
-                        clicked_points = []
+                        for i, obj in enumerate(everything.all_object):
+                            cv2.rectangle(clone, (obj.center[0] - int(obj.width / 2), obj.center[1] - int(obj.height / 2)),
+                                          (obj.center[0] + int(obj.width / 2), obj.center[1] + int(obj.height / 2)),
+                                          (255, 255, 255), 2)
+                            cv2.circle(clone, (obj.center[0], obj.center[1]), 2, (255, 0, 0), thickness=2)
 
-                    if k == 32:
-                        if Rbox is not None:
-                            if label.__eq__('사람'):
-                                h_width = int(Rbox[0])
-                                h_height = int(Rbox[1])
-                                label_width = h_width
-                                label_height = h_height
-                            elif label.__eq__('이륜차'):
-                                motor_width = int(Rbox[0])
-                                motor_height = int(Rbox[1])
-                                label_width = motor_width
-                                label_height = motor_height
-                            elif label.__eq__('자전거'):
-                                bi_width = int(Rbox[0])
-                                bi_height = int(Rbox[1])
-                                label_width = bi_width
-                                label_height = bi_height
-                        Rbox = None
+                        cv2.imshow("image", clone)
 
-                    # 사람 1번
-                    if k == 49:
-                        label = '사람'
-                        label_english = 'person'
-                        label_width = h_width
-                        label_height = h_height
+                        k = cv2.waitKey(0)
+                        # 프로그램 종료
+                        if k == 27:
+                            flag = 2
+                            break
 
-                    # 이륜차 2번
-                    if k == 50:
-                        label = '이륜차'
-                        label_english = 'motorcycle'
-                        label_width = motor_width
-                        label_height = motor_height
+                        # 다음 프레임으로 넘어가기
+                        if k == ord("d"):
+                            break
 
-                    # 자전거 3번
-                    if k == 51:
-                        label = '자전거'
-                        label_english = 'bicycle'
-                        label_width = bi_width
-                        label_height = bi_height
+                        if k == ord('s'):
+                            removeBOX()
+                            clicked_points = []
+
+                        if k == 32:
+                            if Rbox is not None:
+                                if label.__eq__('사람'):
+                                    h_width = int(Rbox[0])
+                                    h_height = int(Rbox[1])
+                                    label_width = h_width
+                                    label_height = h_height
+                                elif label.__eq__('이륜차'):
+                                    motor_width = int(Rbox[0])
+                                    motor_height = int(Rbox[1])
+                                    label_width = motor_width
+                                    label_height = motor_height
+                                elif label.__eq__('자전거'):
+                                    bi_width = int(Rbox[0])
+                                    bi_height = int(Rbox[1])
+                                    label_width = bi_width
+                                    label_height = bi_height
+                            Rbox = None
+
+                        # 사람 1번
+                        if k == 49:
+                            label = '사람'
+                            label_english = 'person'
+                            label_width = h_width
+                            label_height = h_height
+
+                        # 이륜차 2번
+                        if k == 50:
+                            label = '이륜차'
+                            label_english = 'motorcycle'
+                            label_width = motor_width
+                            label_height = motor_height
+
+                        # 자전거 3번
+                        if k == 51:
+                            label = '자전거'
+                            label_english = 'bicycle'
+                            label_width = bi_width
+                            label_height = bi_height
+
+                elif key == 27:
+                    flag = 2
+                    break
+
+                makeXML(id, name, everything.all_object)
+                id += 1
+                clicked_points = []
+                blobs = []
+                # detecting한 이미지 저장
+                img_tmp = cv2.resize(clone, (width,height))
+                cv2.imwrite(image_save_path + "/" + imagename + '/detect' + name, img_tmp)
+                cnt += 1
+
         else:
             break
 
@@ -622,6 +656,7 @@ for i in range(2, length, 1):
     cap.release()
     # out.release()
     cv2.destroyAllWindows()
+    # flag = 0
 
     #%% xml파일 생성
 
@@ -631,5 +666,6 @@ for i in range(2, length, 1):
     # xml 파일로 보내기
     tree = ElementTree(root)
     tree.write(image_save_path + "/" + imagename + "/" + imagename + ".xml")
+
 
 

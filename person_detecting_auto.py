@@ -5,7 +5,8 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree
 import os
 import openpyxl
 
-# cmd 창에서 실행시 python person_detecting.py input_video_path(avi) output_image_dir output_image_name 순으로 적어주면 됩니다.
+# cmd 창에서 실행시 python person_detecting_auto.py input_video_path(avi) output_image_dir output_image_name 순으로 적어주면 됩니다.
+#           또는 python person_detecting_auto.py excel경로
 
 #%% ========================================== 코드 설명 ====================================================
 # cv2.createBackgroundSubtractorKNN() 함수를 사용해서 객체를 먼저 찾고
@@ -17,13 +18,17 @@ import openpyxl
 #
 # 영상 시작 후
 # 첫프레임은 일단 객체를 못찾습니다. 첫프레임만큼은 수동으로...
+# 나머지는 자동을 detect하면서 프레임이 넘어갑니다.
+# 박스크기를 수정하고 싶으면 a를 누르면 영상 재생이 멈춥니다.(다음 프레임에서 멈춤)
+# 이후 d를 누르면 다시 영상 재생이 시작됩니다.
+# ----- a를 누른 이후 할 수 있는일 -----
 # 마우스로 클릭하면 설정한 크기의 박스가 생성됩니다. 원하는 곳에 박스를 만들고 's'를 누르면 해당 위치가 저장이 됩니다.
 # 지우고 싶은 박스가 있는경우 그 박스의 가운데 점을 클릭 후 똑같이 's'를 눌러주면 박스가 사라집니다.
 # 1,2,3번 키를 통해 사람,이륜차,자전거로 라벨명과 박스 크기를 변경할 수 있습니다.\
 # 기준 박스크기 변경은 1,2,3번 키를 통해 바꾸고 오른쪽 마우스 드래그로 원하는 박스크기를 설정 후 스페이스바를 눌러주시면 변경이 됩니다.
 # 해당 프레임의 수정이 끝났으면 'd'를 눌러 다음 프레임으로 넘어갈 수 있습니다.
 # 영상은 1초에 1프레임씩 넘어갑니다.
-#
+# ------------------------------------
 # 재생 도중 멈추고싶으면 'esc'키를 눌러 종료하면 종료시점까지의 데이터(xml,사진)이 저장됩니다.
 # ==========================================================================================================
 
@@ -282,19 +287,19 @@ def makeXML(id, name, all_object):
         xbr = v.center[0] + v.width / 2
         ybr = v.center[1] + v.height / 2
 
-        if xtl*2 < 0:
+        if xtl < 0:
             xtl = 0
-        if ytl*2 < 0:
+        if ytl < 0:
             ytl = 0
-        if xbr*2 > width:
+        if xbr > width:
             xbr = width
-        if ybr*2 > height:
+        if ybr > height:
             ybr = height
 
-        box.attrib["xtl"] = str(xtl*2)
-        box.attrib["ytl"] = str(ytl*2)
-        box.attrib["xbr"] = str(xbr*2)
-        box.attrib["ybr"] = str(ybr*2)
+        box.attrib["xtl"] = str(xtl)
+        box.attrib["ytl"] = str(ytl)
+        box.attrib["xbr"] = str(xbr)
+        box.attrib["ybr"] = str(ybr)
 
 # 들여쓰기 함수
 def apply_indent(elem, level = 0):
@@ -361,7 +366,6 @@ def removeBOX():
 
 #%% 그 외 전역변수
 fgbg = cv2.createBackgroundSubtractorKNN()
-
 
 # 현재 프레임 번호 변수
 t = 0
@@ -434,12 +438,10 @@ for i in range(2, length, 1):
     root = Element('annotations')
     initXML()
     while True:
-        ret, frameo = cap.read()
+        ret, frame = cap.read()
         if not ret:
             break
-        a = int(width/2)
-        b = int(height/2)
-        frame = cv2.resize(frameo, (a,b))
+
         # 마스크 설정 부분
         # 마우스로 보기를 원하는 부분 클릭하고 n누르면 해당부분만 확인
         # 원하는 부분 클릭후  다음 프레임에서 또 다시 클릭하면 모두 확인가능
@@ -511,7 +513,7 @@ for i in range(2, length, 1):
             name = "/" + imagename + "_" + number(cnt) +".jpg"
 
             if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
-                cv2.imwrite(image_save_path + "/" + imagename + "/original" + name, frameo)
+                cv2.imwrite(image_save_path + "/" + imagename + "/original" + name, frame)
 
             # ==============객체 찾는 부분 ===============
             # 객체 찾는 부분만 수정해서 사용하면 됩니다
