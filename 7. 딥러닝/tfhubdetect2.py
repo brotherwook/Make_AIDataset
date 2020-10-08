@@ -128,6 +128,9 @@ for i in range(2, length, 1):
     while True:
         ret, img = cap.read()
 
+        if not ret:
+            break
+
         if flag == 0:
             while True:
                 if mask is None:
@@ -225,6 +228,7 @@ for i in range(2, length, 1):
 
             num += 1
             if cv2.waitKey(1) == 27:
+                flag = 2
                 break
 
             if num % 4 == 0:
@@ -236,6 +240,9 @@ for i in range(2, length, 1):
             else:
                 loading = "-"
             print("\r"+loading +"진행중 {:.2f}%".format((num / int(total_frames)) * 100), end='')
+
+        else:
+            break
 
 
     cv2.destroyAllWindows()
