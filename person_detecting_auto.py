@@ -397,7 +397,7 @@ everything = None
 cnt = 0
 #%%
 if excel_path == None:
-    length = 2
+    length = 3
 else:
     length = sheet.max_row + 1
 

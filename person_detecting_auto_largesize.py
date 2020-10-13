@@ -59,9 +59,9 @@ half_height = int(label_height / 2)
 excel_path = None
 
 if len(sys.argv) == 1:
-    video_path ='C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200928]080000-[20200928]080600(20200928_080000).avi'
-    image_save_path = 'C:\MyWorkspace\Make_AIDataset\outputs\image'
-    imagename = 'test'
+    video_path ='D:/TEST_1012/F18005_4_202010081600.avi'
+    image_save_path = 'D:/aaaaa'
+    imagename = 'F18005_4'
 elif len(sys.argv) == 2:
     excel_path = sys.argv[1]
     excel = openpyxl.load_workbook(excel_path)
@@ -72,7 +72,7 @@ elif len(sys.argv) == 4:
     imagename = sys.argv[3]
 else :
     print("Usage: python person_detecting.py input_video_path(avi) output_image_dir output_image_name")
-    print("원본 동영상 경로 및 저장할 저장할 배경이미지 경로(파일이름까지)(경로에 한글 포함되면 안됩니다.)")
+    print("원본 동영상 경로 및 저장할 배경이미지 경로(파일이름까지)(경로에 한글 포함되면 안됩니다.)")
 
 
 
@@ -397,7 +397,7 @@ everything = None
 cnt = 0
 #%%
 if excel_path == None:
-    length = 2
+    length = 3
 else:
     length = sheet.max_row + 1
 
