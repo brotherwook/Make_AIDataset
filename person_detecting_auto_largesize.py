@@ -56,16 +56,17 @@ label_height = h_height
 half_width = int(label_width / 2)
 half_height = int(label_height / 2)
 
-excel_path = None
+file_path = None
+file_name = ["a"]
 
 if len(sys.argv) == 1:
-    video_path ='D:/TEST_1012/F18005_4_202010081600.avi'
-    image_save_path = 'D:/aaaaa'
-    imagename = 'F18005_4'
-elif len(sys.argv) == 2:
-    excel_path = sys.argv[1]
-    excel = openpyxl.load_workbook(excel_path)
-    sheet = excel['Sheet1']
+    video_path ='D:/F18011_2/20201012/F18011_2_202010121700.avi'
+    image_save_path = './test'
+    imagename = 'test'
+elif len(sys.argv) == 3:
+    file_path = sys.argv[1]
+    image_save_path = sys.argv[2]
+    file_name = os.listdir(file_path)
 elif len(sys.argv) == 4:
     video_path = sys.argv[1]
     image_save_path = sys.argv[2]
@@ -174,9 +175,12 @@ def imagepreprocessing(img):
     height_min = h_height - 20
     height_max = sys.maxsize
 
+    # grayScale 이미지로 변환
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # backgroundSubtracktor에 이미지를 넣어서 배경과 전경을 분리한 이미지 생성
     fgmask = fgbg.apply(gray)
 
+    cv2.imshow("tew", fgmask)
     # 그림자제거
     ret, thresh = cv2.threshold(fgmask, 127, 255, cv2.THRESH_BINARY)
 
@@ -198,6 +202,7 @@ def imagepreprocessing(img):
     k = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
     dil = cv2.dilate(dil, k)
 
+    # close 연산 (팽창 후 침식)
     kernel = np.ones((5, 5), np.uint8)
     dil = cv2.morphologyEx(dil.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
 
@@ -363,6 +368,7 @@ def removeBOX():
     # 초기화
     removed = []
 
+
 #%% 그 외 전역변수
 fgbg = cv2.createBackgroundSubtractorKNN()
 
@@ -395,17 +401,17 @@ color = np.random.randint(0, 255, (200, 3))
 
 everything = None
 cnt = 0
-#%%
-if excel_path == None:
-    length = 3
-else:
-    length = sheet.max_row + 1
 
-for i in range(2, length, 1):
-    if excel_path is not None:
-        video_path = sheet.cell(column=2, row=i).value
-        image_save_path = sheet.cell(column=3, row=i).value
-        imagename = video_path[21:42]
+
+for i,v in enumerate(file_name):
+    # 초기화
+    cnt = 0
+    id = 0
+    fgbg = cv2.createBackgroundSubtractorKNN()
+
+    if file_path is not None:
+        video_path = os.path.join(file_path,v)
+        imagename = v[:-4]
         print(video_path)
         print(image_save_path)
         print(imagename)
@@ -417,7 +423,9 @@ for i in range(2, length, 1):
 
     total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     height, width = (int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)))
-
+    
+    
+    # 디렉토리 생성
     try:
         os.mkdir(image_save_path + "/" + imagename)
     except:
@@ -434,9 +442,11 @@ for i in range(2, length, 1):
         os.mkdir(image_save_path + "/" + imagename + "/detect")
     except:
         print(imagename + "/detect 폴더가 이미 있음")
-
+    
+    # xml 기초 생성
     root = Element('annotations')
     initXML()
+    
     while True:
         ret, frameo = cap.read()
         if not ret:
@@ -478,7 +488,8 @@ for i in range(2, length, 1):
                         for point in clicked_points:
                             cv2.circle(image, (point[1], point[0]), 2, (0, 255, 255), thickness=-1)
                         cv2.imshow("image", image)
-
+                
+                # 박스 크기 설정 (스페이스바)
                 if key == 32:
                     if Rbox is not None:
                         if label.__eq__('사람'):
@@ -497,7 +508,8 @@ for i in range(2, length, 1):
                             label_width = bi_width
                             label_height = bi_height
                     Rbox = None
-
+                
+                # 영상 시작
                 if key == ord('r'):
                     cv2.destroyAllWindows()
                     clicked_points = []
@@ -533,8 +545,10 @@ for i in range(2, length, 1):
                     for i,v in enumerate(roi[0]):
                         if i < len(roi[0])-1:
                             frame = cv2.line(frame,tuple(temp[j][i]),tuple(temp[j][i+1]), (0, 0, 255), 2)
+                            frameo = cv2.line(frameo, tuple(temp[j][i]), tuple(temp[j][i + 1]), (0, 0, 255), 2)
                         else:
                             frame = cv2.line(frame, tuple(temp[j][i]), tuple(temp[j][0]), (0, 0, 255), 2)
+                            frameo = cv2.line(frameo, tuple(temp[j][i]), tuple(temp[j][0]), (0, 0, 255), 2)
             else:
                 # 마스크를 따로 안만들면 영상 전체 조사
                 # 객체 찾는 함수
@@ -544,44 +558,61 @@ for i in range(2, length, 1):
 
             # 1초당 한프레임만 저장
             if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
+                
+                # detect한 객체들 생성 (기본적으로 모두 사람으로 생성됨)
                 everything = AllObject(blobs)
+                
                 # roi 빨간색으로 경계 쳐진 이미지 저장
-                img_tmp = cv2.resize(frame, (width,height))
-                cv2.imwrite(image_save_path + "/" + imagename + "/roi" + name, img_tmp)
+                cv2.imwrite(image_save_path + "/" + imagename + "/roi" + name, frameo)
+
+                # 마우스 클릭 함수가 사용할 clone이미지 생성
                 clone = frame.copy()
+
+                # 현재 마우스를 클릭하면 어떤 라벨의 데이터가 생기는지 나타내주는 부분
                 cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
+
                 half_width = int(label_width / 2)
                 half_height = int(label_height / 2)
 
+                # 모든 객체들을 정해진 박스 크기로 그려줌
                 for i,obj in enumerate(everything.all_object):
                     cv2.rectangle(clone,(obj.center[0] - int(obj.width/2), obj.center[1] - int(obj.height/2)),
                                   (obj.center[0]+int(obj.width/2), obj.center[1]+int(obj.height/2)), (255, 255, 255), 2)
                     cv2.circle(clone, (obj.center[0], obj.center[1]), 2, (255, 0, 0), thickness=2)
 
 
+                # 이미지 출력
                 cv2.imshow("image", clone)
                 cv2.imshow("dil", dil)
 
                 key = cv2.waitKey(1)
 
+                # 첫 이미지 또는 a가 눌리면 멈춤
                 if key == ord("a") or t == 0:
+                    # 라벨 또는 박스의 위치가 바뀔때마다 새로 표시해주기 위해 while문 사용
                     while True:
+                        # 마우스 클릭함수가 사용할 clone 이미지
                         clone = frame.copy()
+                        # 현재 마우스를 클릭하면 어떤 라벨의 데이터가 생기는지 나타내주는 부분
                         cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2,
                                     cv2.LINE_AA)
+
                         half_width = int(label_width / 2)
                         half_height = int(label_height / 2)
 
+                        # 모든 객체들을 정해진 박스 크기로 그려줌
                         for i, obj in enumerate(everything.all_object):
                             cv2.rectangle(clone, (obj.center[0] - int(obj.width / 2), obj.center[1] - int(obj.height / 2)),
                                           (obj.center[0] + int(obj.width / 2), obj.center[1] + int(obj.height / 2)),
                                           (255, 255, 255), 2)
                             cv2.circle(clone, (obj.center[0], obj.center[1]), 2, (255, 0, 0), thickness=2)
 
+                        # 바뀐이미지 출력
                         cv2.imshow("image", clone)
 
                         k = cv2.waitKey(0)
-                        # 프로그램 종료
+
+                        # 프로그램 종료 (esc)
                         if k == 27:
                             flag = 2
                             break
@@ -590,10 +621,12 @@ for i in range(2, length, 1):
                         if k == ord("d"):
                             break
 
+                        # 내가 삭제하거나 새로 만든 박스를 저장 및 생성
                         if k == ord('s'):
                             removeBOX()
                             clicked_points = []
-
+                        
+                        # 마우스 오른쪽 버튼을 드래그해서 박스크기를 정했을시 현재 나타나있는 라벨의 박스 크기를 설정 (스페이스바)
                         if k == 32:
                             if Rbox is not None:
                                 if label.__eq__('사람'):
@@ -633,23 +666,32 @@ for i in range(2, length, 1):
                             label_english = 'bicycle'
                             label_width = bi_width
                             label_height = bi_height
-
+                
+                # 프로그램 종료 (esc)
                 elif key == 27:
                     flag = 2
                     break
-
+                
+                # 현재 이미지의 어노테이션 데이터 생성
                 makeXML(id, name, everything.all_object)
+                # 다음이미지는 새로운 아이디
                 id += 1
+                
+                # 변수 초기화
                 clicked_points = []
                 blobs = []
+                
                 # detecting한 이미지 저장
                 img_tmp = cv2.resize(clone, (width,height))
                 cv2.imwrite(image_save_path + "/" + imagename + '/detect' + name, img_tmp)
+                
+                # 이미지 번호
                 cnt += 1
 
         else:
             break
-
+        
+        # 현재 프레임 번호
         t += 1
 
 

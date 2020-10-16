@@ -57,16 +57,17 @@ label_height = h_height
 half_width = int(label_width / 2)
 half_height = int(label_height / 2)
 
-excel_path = None
+file_path = None
+file_name = ["a"]
 
 if len(sys.argv) == 1:
-    video_path ='C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200928]080000-[20200928]080600(20200928_080000).avi'
-    image_save_path = 'C:\MyWorkspace\Make_AIDataset\outputs\image'
+    video_path ='D:/F18011_2/20201012/F18011_2_202010121700.avi'
+    image_save_path = './test'
     imagename = 'test'
-elif len(sys.argv) == 2:
-    excel_path = sys.argv[1]
-    excel = openpyxl.load_workbook(excel_path)
-    sheet = excel['Sheet1']
+elif len(sys.argv) == 3:
+    file_path = sys.argv[1]
+    image_save_path = sys.argv[2]
+    file_name = os.listdir(file_path)
 elif len(sys.argv) == 4:
     video_path = sys.argv[1]
     image_save_path = sys.argv[2]
@@ -396,16 +397,11 @@ color = np.random.randint(0, 255, (200, 3))
 everything = None
 cnt = 0
 #%%
-if excel_path == None:
-    length = 3
-else:
-    length = sheet.max_row + 1
 
-for i in range(2, length, 1):
-    if excel_path is not None:
-        video_path = sheet.cell(column=2, row=i).value
-        image_save_path = sheet.cell(column=3, row=i).value
-        imagename = video_path[21:42]
+for i,v in enumerate(file_name):
+    if file_path is not None:
+        video_path = os.path.join(file_path,v)
+        imagename = v[:-4]
         print(video_path)
         print(image_save_path)
         print(imagename)
