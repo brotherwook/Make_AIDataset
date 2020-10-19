@@ -403,15 +403,15 @@ everything = None
 cnt = 0
 
 
-for i,v in enumerate(file_name):
+for file in file_name:
     # 초기화
     cnt = 0
     id = 0
     fgbg = cv2.createBackgroundSubtractorKNN()
 
     if file_path is not None:
-        video_path = os.path.join(file_path,v)
-        imagename = v[:-4]
+        video_path = os.path.join(file_path,file)
+        imagename = file[:-4]
         print(video_path)
         print(image_save_path)
         print(imagename)
@@ -437,7 +437,7 @@ for i,v in enumerate(file_name):
     try:
         os.mkdir(image_save_path + "/" + imagename + "/roi")
     except:
-        print(imagename + "/detect 폴더가 이미 있음")
+        print(imagename + "/roi 폴더가 이미 있음")
     try:
         os.mkdir(image_save_path + "/" + imagename + "/detect")
     except:
