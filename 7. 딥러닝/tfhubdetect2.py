@@ -9,16 +9,17 @@ import openpyxl
 # %%  모델 로드 및 xml 저장경로 설정 /캡쳐된 이미지 경로 설정
 model = hub.load("https://tfhub.dev/tensorflow/faster_rcnn/resnet101_v1_800x1333/1")
 
-excel_path = None
+file_path = None
+file_name = ["a"]
 
 if len(sys.argv) == 1:
-    video_path ='C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200928]080000-[20200928]080600(20200928_080000).avi'
-    image_save_path = 'C:\MyWorkspace\Make_AIDataset\outputs\image'
-    imagename = 'test'
-elif len(sys.argv) == 2:
-    excel_path = sys.argv[1]
-    excel = openpyxl.load_workbook(excel_path)
-    sheet = excel['Sheet1']
+    video_path ='D:/F18011_2/20201012/F18011_2_202010121700.avi'
+    image_save_path = './test'
+    imagename = 'F18011_2_202010121700.avi'
+elif len(sys.argv) == 3:
+    file_path = sys.argv[1]
+    image_save_path = sys.argv[2]
+    file_name = os.listdir(file_path)
 elif len(sys.argv) == 4:
     video_path = sys.argv[1]
     image_save_path = sys.argv[2]
@@ -83,17 +84,13 @@ mask = None
 roi = [[]]
 temp = []
 
-#%%
-if excel_path == None:
-    length = 2
-else:
-    length = sheet.max_row + 1
+root = None
 
-for i in range(2, length, 1):
-    if excel_path is not None:
-        video_path = sheet.cell(column=2, row=i).value
-        image_save_path = sheet.cell(column=3, row=i).value
-        imagename = video_path[21:42]
+#%%
+for i,v in enumerate(file_name):
+    if file_path is not None:
+        video_path = os.path.join(file_path,v)
+        imagename = v[:-4]
         print(video_path)
         print(image_save_path)
         print(imagename)
@@ -103,6 +100,7 @@ for i in range(2, length, 1):
     if (not cap.isOpened()):
         print('Error opening video')
 
+    num = 0
     total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     height, width = (int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)))
 

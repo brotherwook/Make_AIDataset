@@ -64,7 +64,7 @@ cv2.namedWindow("image")
 cv2.setMouseCallback("image", MouseLeftClick)
 
 #%% 영상불러오기
-cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F20001;3_3\F20001;3_3sxxxx0;양재1동 23;양재환승센터;(Ch 01)_[20200923]100000-[20200923]100600(20200923_100000).avi')
+cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
 imagename = 'F18006_2_202009140900'
 
 if (not cap.isOpened()):
@@ -73,9 +73,9 @@ if (not cap.isOpened()):
 
 
 #%% 영상 전처리
-def imagepreprocessing(frame):
+def imagepreprocessing(img):
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     fgmask = fgbg.apply(gray)
 
     # 그림자제거
@@ -117,7 +117,7 @@ def imagepreprocessing(frame):
         #               (x + width, y + height), (255, 0, 255), 2)
         # print(area)
         if 400 < area:
-            if 15 < width < 35 and 55 <= height:
+            if 15 < width <= 35 and 55 <= height:
                 center = (int(x + width / 2), int(y + height / 2))
                 # cv2.drawContours(frame, contour, -1, (0, 0, 255), 1)
                 blobs.append(center)
@@ -298,7 +298,7 @@ total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
 # 동영상 저장용 (안씀)
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
-out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
+# out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
 
 
 # 사람의 박스 크기
@@ -331,7 +331,7 @@ while True:
     if not ret:
         break
 
-    frame = cv2.resize(frame,(int(width/2),int(height/2)))
+    # frame = cv2.resize(frame,(int(width/2),int(height/2)))
 
     # 마스크 설정 부분
     # 마우스로 보기를 원하는 부분 클릭하고 n누르면 해당부분만 확인
@@ -401,7 +401,7 @@ while True:
         if t % int(cap.get(cv2.CAP_PROP_FPS)) == 0:
             everything = AllObject(blobs)
             while True:
-                # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/original/' + name, frame)
+                cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/original/' + name, frame)
                 clone = frame.copy()
                 cv2.putText(clone, label_english, (100, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2, cv2.LINE_AA)
                 half_width = int(label_width / 2)
@@ -429,7 +429,7 @@ while True:
                     id += 1
                     clicked_points = []
                     blobs = []
-                    # cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/detect/' + name, clone)
+                    cv2.imwrite('C:\MyWorkspace\Make_AIDataset\image_F18005_1_202009140700/detect/' + name, clone)
 
                     break
 
@@ -465,7 +465,7 @@ while True:
 
 
 cap.release()
-out.release()
+# out.release()
 cv2.destroyAllWindows()
 
 #%% 데이터 확인

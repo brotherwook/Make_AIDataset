@@ -113,7 +113,7 @@ cv2.setMouseCallback("image", MouseLeftClick)
 
 #%%
 # 영상불러오기
-cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi')
+cap = cv2.VideoCapture('C:\MyWorkspace\Make_AIDataset\inputs\F20003;4_8sxxxx0.avi')
 if (not cap.isOpened()):
     print('Error opening video')
 
@@ -304,8 +304,8 @@ roi = [[]]
 
 total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
-out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
+# fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 디지털 미디어 포맷 코드 생성 , 인코딩 방식 설
+# out = cv2.VideoWriter('output.avi', fourcc, cap.get(cv2.CAP_PROP_FPS), (1920, 1080))
 
 #%%
 initXML()
@@ -370,8 +370,9 @@ while True:
 
         blobs = []
 
-        # frames = cv2.resize(frame, (1080, 720))
-        out.write(frame)
+        frames = cv2.resize(frame, (1080, 720))
+        # 영상 추출용
+        # out.write(frame)
         cv2.imshow("frame", frame)
 
         k = cv2.waitKey(1)
@@ -383,7 +384,7 @@ while True:
 
 
 cap.release()
-out.release()
+# out.release()
 cv2.destroyAllWindows()
 
 #%% 데이터 확인

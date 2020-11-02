@@ -2,12 +2,12 @@ import cv2
 import numpy as np
 
 #%%
-background_path = "C:/MyWorkspace/Detectioncode/temp/F18003_2_202009140900_bgr.png"
+background_path = "C:/MyWorkspace/Make_AIDataset/backgrounds/xxx0_background.png"
 
 bkg_bgr = cv2.imread(background_path)
 bkg_gray = cv2.cvtColor(bkg_bgr, cv2.COLOR_BGR2GRAY)
 
-cap = cv2.VideoCapture('C:\MyWorkspace\Detectioncode\inputs\F18003_2\F18003_2_202009140900.mp4')
+cap = cv2.VideoCapture('C:/MyWorkspace/Make_AIDataset/inputs/F20003;4_8sxxxx0.avi')
 if (not cap.isOpened()):
     print('Error opening video')
 
@@ -20,46 +20,20 @@ AREA_TH = 30  # Area Threshold
 mode = cv2.RETR_EXTERNAL
 method = cv2.CHAIN_APPROX_SIMPLE
 
-roi1 = np.array([[
-    (277, 218),
-    (557, 473),
-    (698, 468),
-    (364, 214)
-]], dtype=np.int32)
-
-# mask 생성, 마스크를 적용하여 ROI를 제외한 나머지 부분을 0(검은색)으로 만들기 위해
-mask1 = np.zeros_like(bkg_bgr)  # 이미지와 같은 크기의 마스크 생성
-mask2 = np.zeros_like(bkg_gray)
-# 마스크 적용
-# 마스크(원본과 같은 사이즈의 크기)에서 roi영역만 255로 채움
-cv2.fillPoly(mask1, roi1, (255, 255, 255))
-cv2.fillPoly(mask2, roi1, (255, 255, 255))
-
-# 차선 0으로 만들기
-cv2.line(mask1,(241 ,185 ),(565 ,479 ), (0,0,0),1)
-cv2.line(mask1,(261 ,185 ),(591 ,479 ), (0,0,0),1)
-cv2.line(mask1,(274 ,186 ),(615 ,478 ), (0,0,0),2)
-cv2.line(mask1,(288 ,188 ),(638 ,479 ), (0,0,0),2)
-cv2.line(mask1,(303 ,189 ),(661 ,478 ), (0,0,0),2)
-
-cv2.imshow("mask", mask1)
-
-bkg_bgr1 = cv2.bitwise_and(bkg_bgr, mask1)
-bkg_gray1 = cv2.bitwise_and(bkg_gray, mask2)
-
-cv2.imshow("bkg_bgr", bkg_bgr1)
 while True:
     try:
         retval, frame = cap.read()
+
         if not retval:
             break
         t += 1
-        roi_img = cv2.bitwise_and(frame, mask1)
-        cv2.imshow("roi_img", roi_img)
-        gray = cv2.cvtColor(roi_img, cv2.COLOR_BGR2GRAY)
 
-        diff_gray = cv2.absdiff(gray, bkg_gray1)
-        diff_bgr = cv2.absdiff(roi_img, bkg_bgr1)
+        # roi_img = cv2.bitwise_and(frame, mask1)
+        # cv2.imshow("roi_img", roi_img)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # diff_gray = cv2.absdiff(gray, bkg_gray)
+        diff_bgr = cv2.absdiff(frame, bkg_bgr)
 
         db, dg, dr = cv2.split(diff_bgr)
         ret, bb = cv2.threshold(db, TH, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
@@ -71,21 +45,28 @@ while True:
 
         bImage = cv2.bitwise_or(bb, bg)
         bImage = cv2.bitwise_or(br, bImage)
+
+        bImage = cv2.medianBlur(bImage, 5)
         # cv2.imshow("b", bImage)
 
         # bImage = cv2.erode(bImage, None, 5)
-        # bImage = cv2.dilate(bImage, None, 5)
+        bImage = cv2.dilate(bImage, None, 10)
         # bImage = cv2.erode(bImage, None, 7)
 
         contours, hierarchy = cv2.findContours(bImage, mode, method)
-        cv2.drawContours(roi_img, contours, -1, (255, 0, 0), 1)
+        cv2.drawContours(frame, contours, -1, (255, 0, 0), 1)
 
         for i, cnt in enumerate(contours):
             area = cv2.contourArea(cnt)
-            if  area > AREA_TH and area < 250:
-                print(area)
-                x, y, width, height = cv2.boundingRect(cnt)
-                cv2.rectangle(frame, (x, y), (x + width, y + height), (0, 0, 255), 2)
+            x, y, w, h = cv2.boundingRect(cnt)
+
+            if 80 < w < 600 and 10 < h < 300:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+
+        frame = cv2.resize(frame,(int(width/2), int(height/2)))
+        bImage = cv2.resize(bImage,(int(width/2), int(height/2)))
+        diff_bgr = cv2.resize(diff_bgr,(int(width/2), int(height/2)))
 
         cv2.imshow("frame", frame)
         cv2.imshow("bImage", bImage)

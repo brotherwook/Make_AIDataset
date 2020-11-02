@@ -63,7 +63,6 @@ def GetArgument():
     sampling = int(args['sampling'])
     return path, sampling
 
-
 def main():
     global clone, clicked_points
 

@@ -142,10 +142,10 @@ cv2.setMouseCallback("image", MouseLeftClick)
 
 #%%
 
-img_name = 'test'
-
+video_path = 'D:/video/F18003_3_202010280700.avi'
+img_name = video_path[-25:-4]
 # 비디오 불러오기
-cap = cv2.VideoCapture('D:/F20003_3/20201008/F20003_3_202010080720.avi')
+cap = cv2.VideoCapture(video_path)
 if (not cap.isOpened()):
     print('Error opening video')
 

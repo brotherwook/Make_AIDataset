@@ -258,7 +258,7 @@ def bgr_by_division(video_path, save_path, img_name):
     # cv2.imwrite(os.path.join(save_path, img_name + '_gray.png'), dst_gray)
     # cv2.imwrite(os.path.join(save_path, img_name + '_bgr.png'), dst_bgr)
 
-    cv2.imwrite(os.path.join(save_path, img_name + '_background.png'), background_img)
+    cv2.imwrite(os.path.join(save_path, img_name + '.png'), background_img)
     # 흑백 배경이미지 필요할시 사용
     # cv2.imwrite(os.path.join(save_path, img_name + '_background_gray.png'), background_img_gray)
 
@@ -268,9 +268,14 @@ def bgr_by_division(video_path, save_path, img_name):
 if __name__ == "__main__":
 
     if len(sys.argv) == 1:
-        video_path = 'D:/F20003_3/20201008/F20003_3_202010080720.avi'
+        video_path = 'D:/video/20201008/F20003_4_202010080900.avi'
+        img_name = video_path[-25:-4]
         save_path = "C:/MyWorkspace/Make_AIDataset/backgrounds"
-        img_name = "test"
+        bgr_by_division(video_path, save_path, img_name)
+    elif len(sys.argv) == 3:
+        video_path = sys.argv[1]
+        save_path = sys.argv[2]
+        img_name = video_path[-25:-4]
         bgr_by_division(video_path, save_path, img_name)
     elif len(sys.argv) == 4:
         video_path = sys.argv[1]
