@@ -18,7 +18,7 @@ remove = []
 bbox = []
 trackerName = 'TrackerBoosting'
 
-video_src = 'C:\MyWorkspace\Make_AIDataset\inputs\F18006_2\F18006_2_202009140900.avi'
+video_src = 'C:\MyWorkspace\Make_AIDataset\inputs\F20003;4_8sxxxx0.avi'
 cap = cv2.VideoCapture(video_src)
 fps = cap.get(cv2.CAP_PROP_FPS)
 delay = int(1000/fps)
@@ -27,7 +27,7 @@ while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break
-
+    frame = cv2.resize(frame, (1080, 720))
     img_draw = frame.copy()
     if not(len(tracker) > 0):
         cv2.putText(img_draw, "Press the Space to set ROI!!", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,255),2,cv2.LINE_AA)
