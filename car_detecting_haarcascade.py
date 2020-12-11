@@ -48,9 +48,9 @@ cv2.namedWindow("image")
 cv2.setMouseCallback("image", MouseLeftClick)
 
 
-cascade_src = 'car_color.xml'
+cascade_src = 'cascade.xml'
 # video_src = 'C:/MyWorkspace/Make_AIDataset/inputs/test3.avi'
-video_src = 'C:\MyWorkspace\Make_AIDataset\inputs\F20003;4_8sxxxx0.avi'
+video_src = 'C:\MyWorkspace\Make_AIDataset\inputs\F20010_620201103_160101.mkv'
 
 # video_src = 'dataset/video2.avi'
 

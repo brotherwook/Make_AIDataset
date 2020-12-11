@@ -51,7 +51,7 @@ def number(num):
 cv2.namedWindow("image")
 cv2.setMouseCallback("image", MouseLeftClick)
 
-video_src = 'C:/MyWorkspace/Make_AIDataset/inputs/test3.avi'
+video_src = './inputs/F20003_4_202011020900.avi'
 # video_src = 'dataset/video2.avi'
 
 cap = cv2.VideoCapture(video_src)
@@ -69,7 +69,7 @@ while True:
         break
 
     img = cv2.resize(img, None, fx=0.5, fy=0.5)
-    img = cv2.imread("C:/MyWorkspace/Make_AIDataset/backgrounds/test3_bgr.png")
+    # img = cv2.imread("C:/MyWorkspace/Make_AIDataset/backgrounds/test3_bgr.png")
     height, width, channels = img.shape
     clone = img.copy()
 
@@ -94,8 +94,8 @@ while True:
             gray = cv2.cvtColor(roi_img, cv2.COLOR_BGR2GRAY)
             cv2.imshow("test",roi_img)
             cv2.imshow("tes2t",gray)
-            cv2.imwrite(save_path+"/n/" + str(number(cnt)) + ".jpg", roi_img)
-            cv2.imwrite(save_path+"/n_gray/" + str(number(cnt)) + ".jpg", gray)
+            cv2.imwrite(save_path+"/p_color/" + str(number(cnt)) + ".jpg", roi_img)
+            cv2.imwrite(save_path+"/p_gray/" + str(number(cnt)) + ".jpg", gray)
             cnt += 1
             clone = img.copy()
             roi = []
